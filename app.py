@@ -27,7 +27,8 @@ from ui.components import (
     render_impact_report
 )
 from ui.graph_viz import generate_interactive_graph_html
-from ui.voice import render_voice_interface
+#from ui.voice import render_voice_interface
+from ui.voice import render_voice_panel
 from core.pipeline import NexusPipeline
 from core.llm import is_groq_available, get_groq_api_key, PREFERRED_MODEL
 from agents.graphforge import GraphForgeAgent
@@ -217,7 +218,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Voice Interface Component (Web Speech API)
-components.html(render_voice_interface(), height=130)
+#components.html(render_voice_interface(), height=130)
+# Voice Interface — native Streamlit (gTTS + st.audio, no iframe sandboxing)
+_briefing_text = None
+if st.session_state.scenario_result:
+    _briefing_text = st.session_state.scenario_result.get("narrative", None)
+render_voice_panel(briefing_text=_briefing_text)
 
 # Quick Preset Buttons
 st.markdown("<div style='font-size: 0.8rem; color: #94A3B8; margin-bottom: 6px; font-weight: 600;'>DEMO PRESETS:</div>", unsafe_allow_html=True)
