@@ -2,7 +2,7 @@
 NEXUS Voice Interface Layer
 
 Provides:
-- Browser Speech-to-Text
+- Continuous browser Speech-to-Text
 - Browser Text-to-Speech
 - Streamlit-compatible voice panel
 - No paid voice API required
@@ -187,11 +187,20 @@ VOICE_PANEL_HTML = """
 
 
     let recognition = null;
+
     let listening = false;
+
+    let manuallyStopped = false;
+
+    let finalTranscript = "";
+
+    let restartTimer = null;
 
 
     function setStatus(text, color) {
+
         statusEl.textContent = text;
+
         statusEl.style.color = color;
     }
 
@@ -218,12 +227,17 @@ VOICE_PANEL_HTML = """
                     placeholder.includes("what happens") ||
                     placeholder.includes("failure")
                 ) {
+
                     return input;
                 }
             }
 
         } catch (error) {
-            console.log(error);
+
+            console.log(
+                "Could not access parent input:",
+                error
+            );
         }
 
         return null;
@@ -252,69 +266,123 @@ VOICE_PANEL_HTML = """
                 );
 
             if (descriptor && descriptor.set) {
-                descriptor.set.call(input, text);
+
+                descriptor.set.call(
+                    input,
+                    text
+                );
+
             } else {
+
                 input.value = text;
             }
 
-            input.dispatchEvent(
-                new Event("input", { bubbles: true })
-            );
 
             input.dispatchEvent(
-                new Event("change", { bubbles: true })
+                new Event(
+                    "input",
+                    {
+                        bubbles: true
+                    }
+                )
+            );
+
+
+            input.dispatchEvent(
+                new Event(
+                    "change",
+                    {
+                        bubbles: true
+                    }
+                )
             );
 
         } catch (error) {
-            console.log(error);
+
+            console.log(
+                "Could not update scenario input:",
+                error
+            );
         }
     }
 
 
-    function stopRecognition() {
+    function displayTranscript(text) {
 
-        if (recognition && listening) {
-
-            try {
-                recognition.stop();
-            } catch (error) {
-                console.log(error);
-            }
+        if (!text) {
+            return;
         }
+
+        transcriptBox.style.display = "block";
+
+        transcriptEl.textContent = text;
+
+        putTranscriptIntoScenario(text);
     }
 
 
-    const SpeechRecognition =
-        window.SpeechRecognition ||
-        window.webkitSpeechRecognition;
+    function createRecognition() {
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
 
 
-    if (SpeechRecognition) {
-
-        recognition = new SpeechRecognition();
-
-        recognition.continuous = false;
-        recognition.interimResults = true;
-        recognition.lang = "en-US";
+        if (!SpeechRecognition) {
+            return null;
+        }
 
 
-        recognition.onstart = function () {
+        const instance =
+            new SpeechRecognition();
+
+
+        /*
+         * IMPORTANT:
+         * Continuous mode allows longer scenario sentences.
+         */
+        instance.continuous = true;
+
+        /*
+         * Keep interim results so the user can see
+         * the words while speaking.
+         */
+        instance.interimResults = true;
+
+        /*
+         * More suitable for normal English speech.
+         */
+        instance.lang = "en-US";
+
+        /*
+         * Ask the browser for alternatives.
+         * The first result remains the primary transcript.
+         */
+        instance.maxAlternatives = 1;
+
+
+        instance.onstart = function () {
 
             listening = true;
 
             speakBtn.style.display = "none";
-            stopListeningBtn.style.display = "inline-block";
+
+            stopListeningBtn.style.display =
+                "inline-block";
 
             setStatus(
-                "Listening...",
+                "Listening... Keep speaking",
                 "#EF4444"
             );
         };
 
 
-        recognition.onresult = function (event) {
+        instance.onresult = function (event) {
 
-            let transcript = "";
+            let interimTranscript = "";
+
+            let newFinalTranscript = "";
+
 
             for (
                 let i = event.resultIndex;
@@ -322,32 +390,78 @@ VOICE_PANEL_HTML = """
                 i++
             ) {
 
-                transcript +=
-                    event.results[i][0].transcript;
+                const result =
+                    event.results[i];
+
+                const transcript =
+                    result[0].transcript;
+
+
+                if (result.isFinal) {
+
+                    newFinalTranscript +=
+                        transcript + " ";
+
+                } else {
+
+                    interimTranscript +=
+                        transcript;
+                }
             }
 
-            transcript = transcript.trim();
 
-            if (transcript) {
+            /*
+             * Add only newly finalized speech.
+             */
+            if (newFinalTranscript) {
 
-                transcriptBox.style.display = "block";
+                finalTranscript +=
+                    newFinalTranscript;
+            }
 
-                transcriptEl.textContent =
-                    transcript;
 
-                putTranscriptIntoScenario(
-                    transcript
+            const combinedTranscript =
+                (
+                    finalTranscript +
+                    interimTranscript
+                ).trim();
+
+
+            if (combinedTranscript) {
+
+                displayTranscript(
+                    combinedTranscript
                 );
             }
         };
 
 
-        recognition.onerror = function (event) {
+        instance.onerror = function (event) {
 
-            listening = false;
+            /*
+             * Some browsers report "no-speech"
+             * when there was simply a short pause.
+             *
+             * We do NOT stop the whole voice session.
+             */
+            if (
+                event.error === "no-speech" ||
+                event.error === "audio-capture"
+            ) {
 
-            speakBtn.style.display = "inline-block";
-            stopListeningBtn.style.display = "none";
+                setStatus(
+                    "Listening...",
+                    "#EF4444"
+                );
+
+                return;
+            }
+
+
+            console.log(
+                "Speech recognition error:",
+                event.error
+            );
 
             setStatus(
                 "Speech error: " + event.error,
@@ -356,12 +470,69 @@ VOICE_PANEL_HTML = """
         };
 
 
-        recognition.onend = function () {
+        instance.onend = function () {
 
             listening = false;
 
-            speakBtn.style.display = "inline-block";
-            stopListeningBtn.style.display = "none";
+
+            /*
+             * Chrome/Edge may automatically end a
+             * recognition session even when the user
+             * still wants to speak.
+             *
+             * Restart automatically unless the user
+             * explicitly pressed Stop Listening.
+             */
+            if (!manuallyStopped) {
+
+                setStatus(
+                    "Reconnecting microphone...",
+                    "#22D3EE"
+                );
+
+
+                clearTimeout(
+                    restartTimer
+                );
+
+
+                restartTimer =
+                    setTimeout(
+                        function () {
+
+                            if (
+                                !manuallyStopped &&
+                                recognition
+                            ) {
+
+                                try {
+
+                                    recognition.start();
+
+                                } catch (error) {
+
+                                    console.log(
+                                        "Recognition restart:",
+                                        error
+                                    );
+                                }
+                            }
+
+                        },
+                        250
+                    );
+
+
+                return;
+            }
+
+
+            speakBtn.style.display =
+                "inline-block";
+
+            stopListeningBtn.style.display =
+                "none";
+
 
             setStatus(
                 "Speech Captured",
@@ -370,18 +541,76 @@ VOICE_PANEL_HTML = """
         };
 
 
+        return instance;
+    }
+
+
+    /*
+     * Initialize browser recognition.
+     */
+    recognition =
+        createRecognition();
+
+
+    if (!recognition) {
+
+        speakBtn.disabled = true;
+
+        speakBtn.style.opacity = "0.5";
+
+        speakBtn.style.cursor =
+            "not-allowed";
+
+        setStatus(
+            "Speech not supported",
+            "#F59E0B"
+        );
+
+    } else {
+
+
+        /*
+         * START LISTENING
+         */
         speakBtn.addEventListener(
             "click",
             function () {
 
                 if (listening) {
-                    stopRecognition();
                     return;
                 }
 
+
+                /*
+                 * Start a completely fresh transcript.
+                 */
+                finalTranscript = "";
+
+                transcriptEl.textContent = "";
+
+                transcriptBox.style.display =
+                    "none";
+
+
+                manuallyStopped = false;
+
+
+                clearTimeout(
+                    restartTimer
+                );
+
+
                 try {
+
                     recognition.start();
+
                 } catch (error) {
+
+                    console.log(
+                        "Recognition start:",
+                        error
+                    );
+
                     setStatus(
                         "Microphone unavailable",
                         "#F59E0B"
@@ -391,27 +620,52 @@ VOICE_PANEL_HTML = """
         );
 
 
+        /*
+         * STOP LISTENING
+         */
         stopListeningBtn.addEventListener(
             "click",
             function () {
-                stopRecognition();
+
+                manuallyStopped = true;
+
+                clearTimeout(
+                    restartTimer
+                );
+
+
+                if (recognition) {
+
+                    try {
+                        recognition.stop();
+                    } catch (error) {
+                        console.log(error);
+                    }
+                }
+
+
+                listening = false;
+
+
+                speakBtn.style.display =
+                    "inline-block";
+
+                stopListeningBtn.style.display =
+                    "none";
+
+
+                setStatus(
+                    "Speech Captured",
+                    "#22C55E"
+                );
             }
-        );
-
-    } else {
-
-        speakBtn.disabled = true;
-
-        speakBtn.style.opacity = "0.5";
-        speakBtn.style.cursor = "not-allowed";
-
-        setStatus(
-            "Speech not supported",
-            "#F59E0B"
         );
     }
 
 
+    /*
+     * TEXT TO SPEECH
+     */
     readoutBtn.addEventListener(
         "click",
         function () {
@@ -426,12 +680,16 @@ VOICE_PANEL_HTML = """
             }
 
 
-            if (window.speechSynthesis.speaking) {
+            if (
+                window.speechSynthesis.speaking
+            ) {
 
                 window.speechSynthesis.cancel();
 
+
                 readoutBtn.textContent =
                     "🔊 Listen to Executive Briefing";
+
 
                 setStatus(
                     "Audio Stopped",
@@ -452,6 +710,7 @@ VOICE_PANEL_HTML = """
                     window.parent.document.querySelector(
                         ".executive-briefing-text"
                     );
+
 
                 if (
                     briefing &&
@@ -492,43 +751,50 @@ VOICE_PANEL_HTML = """
 
 
             utterance.rate = 1.05;
+
             utterance.pitch = 1.0;
 
 
-            utterance.onstart = function () {
+            utterance.onstart =
+                function () {
 
-                readoutBtn.textContent =
-                    "⏹ Stop Speaking";
-
-                setStatus(
-                    "Playing briefing...",
-                    "#22D3EE"
-                );
-            };
+                    readoutBtn.textContent =
+                        "⏹ Stop Speaking";
 
 
-            utterance.onend = function () {
-
-                readoutBtn.textContent =
-                    "🔊 Listen to Executive Briefing";
-
-                setStatus(
-                    "Briefing Finished",
-                    "#94A3B8"
-                );
-            };
+                    setStatus(
+                        "Playing briefing...",
+                        "#22D3EE"
+                    );
+                };
 
 
-            utterance.onerror = function () {
+            utterance.onend =
+                function () {
 
-                readoutBtn.textContent =
-                    "🔊 Listen to Executive Briefing";
+                    readoutBtn.textContent =
+                        "🔊 Listen to Executive Briefing";
 
-                setStatus(
-                    "Audio error",
-                    "#F59E0B"
-                );
-            };
+
+                    setStatus(
+                        "Briefing Finished",
+                        "#94A3B8"
+                    );
+                };
+
+
+            utterance.onerror =
+                function () {
+
+                    readoutBtn.textContent =
+                        "🔊 Listen to Executive Briefing";
+
+
+                    setStatus(
+                        "Audio error",
+                        "#F59E0B"
+                    );
+                };
 
 
             window.speechSynthesis.speak(
@@ -538,16 +804,24 @@ VOICE_PANEL_HTML = """
     );
 
 
+    /*
+     * STOP AUDIO
+     */
     stopAudioBtn.addEventListener(
         "click",
         function () {
 
-            if (window.speechSynthesis) {
+            if (
+                window.speechSynthesis
+            ) {
+
                 window.speechSynthesis.cancel();
             }
 
+
             readoutBtn.textContent =
                 "🔊 Listen to Executive Briefing";
+
 
             setStatus(
                 "Audio Stopped",
@@ -565,9 +839,6 @@ VOICE_PANEL_HTML = """
 def render_voice_panel(briefing_text=None):
     """
     Render the NEXUS voice interaction panel.
-
-    briefing_text is accepted so app.py can pass
-    the current executive narrative.
     """
 
     components.html(
