@@ -5,9 +5,15 @@ Impact Reports, and Evidence Tables adhering to the 2026 AI Product Experience.
 """
 
 from typing import Dict, List, Any, Optional
+import textwrap
 import streamlit as st
 from core.models import ImpactResult, RiskAnalysis, RecoveryPlan, EvidenceCitation
 from tools.evidence_tools import format_fact_tag
+
+
+def clean_html(raw_html: str) -> str:
+    """Strips leading whitespace from multi-line HTML strings to prevent Markdown code block triggers."""
+    return textwrap.dedent(raw_html).strip()
 
 
 def render_hero_header():
@@ -102,13 +108,6 @@ def render_metrics_dashboard(
 def render_agent_activity_feed(agent_statuses: Dict[str, Dict[str, Any]]):
     """
     Renders real agent execution activity.
-    Example:
-      ✓ ORION: Documents analyzed
-      ✓ NEXUS-MAPPER: Dependencies discovered
-      ✓ GRAPHFORGE: Dependency graph generated
-      ✓ CASCADE: Simulating failure...
-      ○ SENTINEL: Waiting
-      ○ AEGIS: Waiting
     """
     st.markdown("""
     <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8; margin-bottom: 8px;">
@@ -222,101 +221,103 @@ def render_impact_report(
     col_dir, col_ind, col_prod = st.columns(3)
     
     with col_dir:
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: #0D1220; border: 1px solid #1E293B; border-radius: 8px; padding: 14px;">
           <div style="font-size: 0.75rem; text-transform: uppercase; color: #EF4444; font-weight: 700;">Direct Downstream Impact</div>
           <div style="font-size: 1.5rem; font-weight: 700; margin: 4px 0; color: #F8FAFC;">{len(impact.direct_impact)} Entity(s)</div>
           <div style="font-size: 0.82rem; color: #94A3B8;">{', '.join(impact.direct_impact) if impact.direct_impact else 'None'}</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
         
     with col_ind:
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: #0D1220; border: 1px solid #1E293B; border-radius: 8px; padding: 14px;">
           <div style="font-size: 0.75rem; text-transform: uppercase; color: #F59E0B; font-weight: 700;">Cascading / Indirect Impact</div>
           <div style="font-size: 1.5rem; font-weight: 700; margin: 4px 0; color: #F8FAFC;">{len(impact.indirect_impact)} Entity(s)</div>
           <div style="font-size: 0.82rem; color: #94A3B8;">{', '.join(impact.indirect_impact) if impact.indirect_impact else 'None'}</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
         
     with col_prod:
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: #0D1220; border: 1px solid #1E293B; border-radius: 8px; padding: 14px;">
           <div style="font-size: 0.75rem; text-transform: uppercase; color: #22D3EE; font-weight: 700;">Finished Products Compromised</div>
           <div style="font-size: 1.5rem; font-weight: 700; margin: 4px 0; color: #F8FAFC;">{len(impact.terminal_products)} Product(s)</div>
           <div style="font-size: 0.82rem; color: #94A3B8;">{', '.join(impact.terminal_products) if impact.terminal_products else 'None'}</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
         
     st.markdown("<br/>", unsafe_allow_html=True)
     
     # 4. Inventory Runway & Gap Analysis Table
-    st.markdown("""
+    st.markdown(clean_html("""
     <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #94A3B8; margin-bottom: 8px;">
       INVENTORY BUFFER RUNWAY & OUTAGE GAP MATH
     </div>
-    """, unsafe_allow_html=True)
+    """), unsafe_allow_html=True)
     
     # KPI row
     k1, k2, k3 = st.columns(3)
     with k1:
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: #070A13; border: 1px solid #1E293B; border-radius: 8px; padding: 12px; text-align: center;">
           <div style="font-size: 0.75rem; color: #94A3B8;">On-Hand Inventory Coverage</div>
           <div style="font-size: 1.8rem; font-weight: 700; color: #22D3EE;">{impact.inventory_coverage_days:g} Days</div>
           <div style="font-size: 0.75rem; color: #64748B;">Calculated from Inventory.xlsx</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
     with k2:
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: #070A13; border: 1px solid #1E293B; border-radius: 8px; padding: 12px; text-align: center;">
           <div style="font-size: 0.75rem; color: #94A3B8;">Outage Duration Tested</div>
           <div style="font-size: 1.8rem; font-weight: 700; color: #F8FAFC;">{impact.outage_duration_days:g} Days</div>
           <div style="font-size: 0.75rem; color: #64748B;">Input Scenario</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
     with k3:
         gap_col = "#EF4444" if impact.inventory_gap_days > 0 else "#22C55E"
-        st.markdown(f"""
+        st.markdown(clean_html(f"""
         <div style="background: #070A13; border: 1px solid #1E293B; border-radius: 8px; padding: 12px; text-align: center;">
           <div style="font-size: 0.75rem; color: #94A3B8;">Production Stoppage Gap</div>
           <div style="font-size: 1.8rem; font-weight: 700; color: {gap_col};">{impact.inventory_gap_days:g} Days</div>
           <div style="font-size: 0.75rem; color: #64748B;">Unbuffered Downtime</div>
         </div>
-        """, unsafe_allow_html=True)
+        """), unsafe_allow_html=True)
         
     # Multi-day comparison table
     if impact.multi_day_comparison:
-        st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
         comp_rows = []
         for c in impact.multi_day_comparison:
             badge_color = "#22C55E" if c.gap_days == 0 else "#EF4444"
-            comp_rows.append(f"""
-            <tr style="border-bottom: 1px solid #1E293B;">
-              <td style="padding: 8px 12px; font-weight: 600;">{c.duration_days:g} Days</td>
-              <td style="padding: 8px 12px; color: #22D3EE;">{c.coverage_days:g} Days</td>
-              <td style="padding: 8px 12px; color: {badge_color}; font-weight: 700;">{c.gap_days:g} Days</td>
-              <td style="padding: 8px 12px;"><span style="color: {badge_color};">{c.status}</span></td>
-              <td style="padding: 8px 12px; color: #94A3B8; font-size: 0.8rem;">{c.production_impact}</td>
-            </tr>
-            """)
+            row_html = (
+                '<tr style="border-bottom: 1px solid #1E293B;">'
+                f'<td style="padding: 10px 12px; font-weight: 600; color: #F8FAFC;">{c.duration_days:g} Days</td>'
+                f'<td style="padding: 10px 12px; color: #22D3EE;">{c.coverage_days:g} Days</td>'
+                f'<td style="padding: 10px 12px; color: {badge_color}; font-weight: 700;">{c.gap_days:g} Days</td>'
+                f'<td style="padding: 10px 12px;"><span style="color: {badge_color}; font-weight: 600;">{c.status}</span></td>'
+                f'<td style="padding: 10px 12px; color: #94A3B8; font-size: 0.82rem;">{c.production_impact}</td>'
+                '</tr>'
+            )
+            comp_rows.append(row_html)
             
-        st.markdown(f"""
-        <table style="width: 100%; border-collapse: collapse; background: #070A13; border: 1px solid #1E293B; border-radius: 8px; font-size: 0.85rem;">
-          <thead>
-            <tr style="border-bottom: 1px solid #1E293B; text-align: left; color: #94A3B8; font-size: 0.75rem; text-transform: uppercase;">
-              <th style="padding: 10px 12px;">Outage Duration</th>
-              <th style="padding: 10px 12px;">Inventory Coverage</th>
-              <th style="padding: 10px 12px;">Buffer Gap</th>
-              <th style="padding: 10px 12px;">Buffer Status</th>
-              <th style="padding: 10px 12px;">Production Impact</th>
-            </tr>
-          </thead>
-          <tbody>
-            {''.join(comp_rows)}
-          </tbody>
-        </table>
-        """, unsafe_allow_html=True)
+        rows_str = "".join(comp_rows)
+        table_html = (
+            '<div style="overflow-x: auto; margin-top: 14px; margin-bottom: 8px;">'
+            '<table style="width: 100%; border-collapse: collapse; background: #070A13; border: 1px solid #1E293B; border-radius: 8px; font-size: 0.85rem;">'
+            '<thead>'
+            '<tr style="border-bottom: 1px solid #1E293B; text-align: left; color: #94A3B8; font-size: 0.75rem; text-transform: uppercase;">'
+            '<th style="padding: 10px 12px;">Outage Duration</th>'
+            '<th style="padding: 10px 12px;">Inventory Coverage</th>'
+            '<th style="padding: 10px 12px;">Buffer Gap</th>'
+            '<th style="padding: 10px 12px;">Buffer Status</th>'
+            '<th style="padding: 10px 12px;">Production Impact</th>'
+            '</tr>'
+            '</thead>'
+            f'<tbody>{rows_str}</tbody>'
+            '</table>'
+            '</div>'
+        )
+        st.markdown(table_html, unsafe_allow_html=True)
         
     st.markdown("<br/>", unsafe_allow_html=True)
     
