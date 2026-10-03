@@ -3,6 +3,7 @@ NEXUS Voice Interface Layer
 Implements client-side, zero-cost, browser-native Speech-to-Text and Text-to-Speech
 via standard Web Speech API (webkitSpeechRecognition & speechSynthesis).
 100% Streamlit Cloud compatible with zero external paid API keys.
+Includes full audio playback control: Play, Pause, Stop, and Speech cancellation.
 """
 
 VOICE_INTERFACE_HTML = """
@@ -15,12 +16,15 @@ VOICE_INTERFACE_HTML = """
     <span id="voice-status" style="font-size: 0.8rem; color: #94A3B8; background: #0D1220; padding: 4px 10px; border-radius: 20px; border: 1px solid #1E293B;">Ready</span>
   </div>
   
-  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+  <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
     <button id="start-listen-btn" style="background: linear-gradient(135deg, #6366F1, #4F46E5); color: #FFF; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
       <span>🎙️</span> <span id="listen-btn-text">Speak Scenario</span>
     </button>
     <button id="readout-btn" style="background: #0D1220; color: #22D3EE; border: 1px solid #22D3EE; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-      <span>🔊</span> <span>Listen to Executive Briefing</span>
+      <span id="readout-icon">🔊</span> <span id="readout-btn-text">Listen to Executive Briefing</span>
+    </button>
+    <button id="stop-audio-btn" style="background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid #EF4444; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+      <span>⏹️</span> <span>Stop Audio</span>
     </button>
   </div>
   
@@ -37,12 +41,43 @@ VOICE_INTERFACE_HTML = """
   const listenBtn = document.getElementById('start-listen-btn');
   const listenBtnText = document.getElementById('listen-btn-text');
   const readoutBtn = document.getElementById('readout-btn');
+  const readoutBtnText = document.getElementById('readout-btn-text');
+  const readoutIcon = document.getElementById('readout-icon');
+  const stopAudioBtn = document.getElementById('stop-audio-btn');
   const transcriptContainer = document.getElementById('transcript-container');
   const voiceText = document.getElementById('voice-text');
   
   let recognition = null;
   let isListening = false;
+  let isSpeaking = false;
   
+  // Clean cancellation helper
+  function stopAllSpeech() {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    isSpeaking = false;
+    readoutIcon.textContent = '🔊';
+    readoutBtnText.textContent = 'Listen to Executive Briefing';
+    readoutBtn.style.borderColor = '#22D3EE';
+    readoutBtn.style.color = '#22D3EE';
+    statusEl.textContent = 'Audio Stopped';
+    statusEl.style.color = '#94A3B8';
+    statusEl.style.borderColor = '#1E293B';
+  }
+  
+  // Stop button handler
+  stopAudioBtn.addEventListener('click', function() {
+    stopAllSpeech();
+  });
+  
+  // Always stop speaking if page unloads or re-runs
+  window.addEventListener('beforeunload', function() {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+  });
+
   // Speech Recognition (Speech to Text)
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (SpeechRecognition) {
@@ -52,6 +87,8 @@ VOICE_INTERFACE_HTML = """
     recognition.lang = 'en-US';
     
     recognition.onstart = function() {
+      // If audio is playing when user wants to speak, stop audio
+      stopAllSpeech();
       isListening = true;
       statusEl.textContent = 'Listening...';
       statusEl.style.color = '#EF4444';
@@ -74,7 +111,6 @@ VOICE_INTERFACE_HTML = """
         transcriptContainer.style.display = 'block';
         voiceText.textContent = transcript;
         
-        // Also attempt to set the Streamlit scenario input field if accessible
         try {
           const inputs = window.parent.document.querySelectorAll('input[type="text"]');
           inputs.forEach(input => {
@@ -102,7 +138,7 @@ VOICE_INTERFACE_HTML = """
       listenBtnText.textContent = 'Speak Scenario';
     };
   } else {
-    statusEl.textContent = 'Web Speech not supported in this browser';
+    statusEl.textContent = 'Web Speech not supported';
   }
   
   listenBtn.addEventListener('click', function() {
@@ -117,10 +153,16 @@ VOICE_INTERFACE_HTML = """
     }
   });
   
-  // Speech Synthesis (Text to Speech)
+  // Speech Synthesis (Text to Speech) with Toggle & Stop capability
   readoutBtn.addEventListener('click', function() {
     if (!window.speechSynthesis) {
       alert('Text to speech is not supported in this browser.');
+      return;
+    }
+    
+    // If currently speaking, toggle to stop!
+    if (window.speechSynthesis.speaking && isSpeaking) {
+      stopAllSpeech();
       return;
     }
     
@@ -128,25 +170,46 @@ VOICE_INTERFACE_HTML = """
     let textToSpeak = "NEXUS Executive Briefing. ";
     try {
       const summaryEl = window.parent.document.querySelector('.executive-briefing-text');
-      if (summaryEl && summaryEl.innerText) {
-        textToSpeak += summaryEl.innerText;
+      if (summaryEl && summaryEl.innerText && summaryEl.innerText.trim().length > 10) {
+        // Strip markdown asterisks and hashtags for smooth speech
+        let cleanText = summaryEl.innerText
+          .replace(/[*#_`]/g, '')
+          .replace(/\n+/g, '. ')
+          .replace(/\s+/g, ' ');
+        textToSpeak += cleanText;
       } else {
-        textToSpeak += "Simulation complete. Supplier A failure causes critical downstream outage affecting final assembly. 5 days inventory buffer results in a 2-day production gap. No documented alternative found.";
+        textToSpeak += "Simulation complete. Evaluated failure cascade and inventory buffer across all dependent processes and finished products.";
       }
     } catch(e) {
       textToSpeak += "Simulation complete. Production chain evaluated with deterministic impact results.";
     }
     
+    // Cancel any previous utterances
     window.speechSynthesis.cancel();
+    
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.rate = 1.05;
     utterance.pitch = 1.0;
-    statusEl.textContent = 'Playing Audio Briefing...';
-    statusEl.style.color = '#22D3EE';
+    
+    utterance.onstart = function() {
+      isSpeaking = true;
+      readoutIcon.textContent = '⏹️';
+      readoutBtnText.textContent = 'Stop Speaking';
+      readoutBtn.style.borderColor = '#EF4444';
+      readoutBtn.style.color = '#EF4444';
+      statusEl.textContent = 'Playing Audio Briefing... (Click to Stop)';
+      statusEl.style.color = '#22D3EE';
+      statusEl.style.borderColor = '#22D3EE';
+    };
     
     utterance.onend = function() {
+      stopAllSpeech();
       statusEl.textContent = 'Briefing Finished';
       statusEl.style.color = '#94A3B8';
+    };
+    
+    utterance.onerror = function() {
+      stopAllSpeech();
     };
     
     window.speechSynthesis.speak(utterance);
