@@ -1,0 +1,21 @@
+VOLTRA MOBILITY // TOOLING & MACHINE SPECIFICATIONS
+Document ID: MACH-SPEC-404
+
+Machine B: SMT Robot #4
+- Station Location: Assembly Line 2 (ECU Sub-assembly)
+- Function: High-speed placement of microchips onto vehicle avionics circuit boards.
+- Critical Feed Component: Microcontroller MCU-900 (taped reel format).
+- Operating Dependency: SMT Robot #4 cannot substitute alternative microchip architectures without full recalibration and firmware recompilation (estimated 90 days).
+
+Battery Pack Laser Welder
+- Station Location: Assembly Line 1 (Powertrain Integration)
+- Function: Automated robotic busbar welding for Lithium-Ion Battery Cells.
+- Cycle Time: 45 seconds per module.
+
+Stator Winding Automated Press
+- Station Location: Assembly Line 1 (Powertrain Integration)
+- Function: Press-fits Electric Traction Motor Stator core into electric motor housing.
+
+Automated Test Rig #2
+- Station Location: Line 3 Inspection Station
+- Function: Calibration of Ultrasonic Radar Sensors for collision avoidance and ADAS.

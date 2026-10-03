@@ -1,0 +1,20 @@
+VOLTRA MOBILITY // STANDARD OPERATING PROCEDURE SOP-704
+Title: Supply Chain Disruption & Factory Contingency Protocol
+Effective Date: January 15, 2026
+
+1. PURPOSE
+Defines operational response thresholds when critical component deliveries are halted.
+
+2. INVENTORY RUNWAY EVALUATION
+2.1 Buffer Calculation: Days of Inventory = Current Stock / Daily Consumption.
+2.2 Microcontroller MCU-900 Stock Policy:
+    - Normal Buffer: 5 Days of active stock (2,500 units at 500 units/day consumption).
+    - If supplier outage duration exceeds 5 days: Critical Gap occurs.
+    - Day 1-5: Production operates normally using on-hand buffer.
+    - Day 6+: Total line stoppage of Line 2 (ECU Sub-assembly) and Line 3 (Voltra Model V-1).
+
+3. ALTERNATIVE SOURCING PROTOCOLS
+3.1 For components with approved secondary suppliers (e.g. VoltCell -> Amperex Dynamics):
+    Initiate secondary purchase order within 12 hours of confirmed primary disruption.
+3.2 For single-source components with NO documented alternative (e.g. Apex Microelectronics MCU-900):
+    Plant manager must declare Force Majeure operational suspension upon stock depletion.

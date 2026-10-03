@@ -1,0 +1,46 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 1373 >>
+stream
+BT /F1 12 Tf 50 750 Td (Master Supply Contracts) Tj ET
+BT /F1 9 Tf 50 720 Td (VOLTRA MOBILITY // MASTER SUPPLY AGREEMENTS SUMMARY) Tj ET
+BT /F1 9 Tf 50 702 Td (Legal Repository: LEGAL-MSA-2025-ARCHIVE) Tj ET
+BT /F1 9 Tf 50 684 Td (CONTRACT MSA-4401: APEX MICROELECTRONICS) Tj ET
+BT /F1 9 Tf 50 666 Td (- Parties: Voltra Mobility Inc. & Apex Microelectronics Corp.) Tj ET
+BT /F1 9 Tf 50 648 Td (- Component: Microcontroller MCU-900 [Automotive Grade 32-bit SoC].) Tj ET
+BT /F1 9 Tf 50 630 Td (- Section 3 [Sole Sourcing & Exclusivity]: Apex Microelectronics is designated as the) Tj ET
+BT /F1 9 Tf 50 612 Td (- Section 7 [Backup & Contingency]: NO certified secondary foundry exists. Requalific) Tj ET
+BT /F1 9 Tf 50 594 Td (- SOURCING STATUS: SINGLE POINT OF FAILURE. No documented backup supplier certified.) Tj ET
+BT /F1 9 Tf 50 576 Td (CONTRACT MSA-8812: VOLTCELL ENERGY) Tj ET
+BT /F1 9 Tf 50 558 Td (- Parties: Voltra Mobility Inc. & VoltCell Energy Ltd.) Tj ET
+BT /F1 9 Tf 50 540 Td (- Component: Lithium-Ion Battery Cells [4680 cylindrical format].) Tj ET
+BT /F1 9 Tf 50 522 Td (- Section 8.2 [Emergency Secondary Sourcing]: In the event of supply interruption exc) Tj ET
+BT /F1 9 Tf 50 504 Td (- Activation SLA: Guaranteed initial shipment within 3 business days from Amperex Dyn) Tj ET
+BT /F1 9 Tf 50 486 Td (- SOURCING STATUS: PROTECTED BY CERTIFIED BACKUP.) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001666 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1736
+%%EOF

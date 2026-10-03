@@ -1,0 +1,5 @@
+Supplier_Name,Component_Supplied,Category,Lead_Time_Days,Backup_Supplier,Backup_SLA_Days,Contract_ID,Risk_Level
+Apex Microelectronics,Microcontroller MCU-900,Avionics / Microchips,21,None,N/A,MSA-4401,CRITICAL - SINGLE SOURCE
+VoltCell Energy,Lithium-Ion Battery Cells,Energy Storage,14,Amperex Dynamics,3,MSA-8812,LOW - BACKUP CERTIFIED
+StatorTech Precision,Electric Traction Motor Stator,Electric Powertrain,10,GlobalDrive Dynamics,14,MSA-3109,MODERATE
+Sensoryx Corp,Ultrasonic Radar Sensors,ADAS Sensors,7,None,N/A,MSA-9021,MODERATE

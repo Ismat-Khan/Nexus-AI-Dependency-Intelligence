@@ -1,0 +1,53 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 2084 >>
+stream
+BT /F1 12 Tf 50 750 Td (Production Process Specification) Tj ET
+BT /F1 9 Tf 50 720 Td (VOLTRA MOBILITY // MANUFACTURING PROCESS SPECIFICATION) Tj ET
+BT /F1 9 Tf 50 702 Td (Document ID: PROC-2026-ENG-08) Tj ET
+BT /F1 9 Tf 50 684 Td (Classification: Internal Manufacturing Standard) Tj ET
+BT /F1 9 Tf 50 666 Td (1. EXECUTIVE OVERVIEW) Tj ET
+BT /F1 9 Tf 50 648 Td (Voltra Mobility operates a continuous synchronous automotive production line for two ) Tj ET
+BT /F1 9 Tf 50 630 Td (- Voltra Model V-1 [All-electric urban passenger sedan, target 500 units/day]) Tj ET
+BT /F1 9 Tf 50 612 Td (- Voltra Commercial Fleet Van [Light commercial delivery van, target 150 units/day]) Tj ET
+BT /F1 9 Tf 50 594 Td (2. ASSEMBLY LINE ARCHITECTURE & DEPENDENCIES) Tj ET
+BT /F1 9 Tf 50 576 Td (Line 1: Powertrain Integration) Tj ET
+BT /F1 9 Tf 50 558 Td (- Integrates Electric Traction Motor Stator assemblies and high-voltage battery modul) Tj ET
+BT /F1 9 Tf 50 540 Td (- Output: Complete high-voltage chassis powertrain unit. Feeds directly into Line 3.) Tj ET
+BT /F1 9 Tf 50 522 Td (Line 2: ECU Sub-assembly & Avionics) Tj ET
+BT /F1 9 Tf 50 504 Td (- Primary Machine: SMT Robot #4 [Surface Mount Technology high-speed placer].) Tj ET
+BT /F1 9 Tf 50 486 Td (- Required Component: Microcontroller MCU-900 [Supplied exclusively by Apex Microelec) Tj ET
+BT /F1 9 Tf 50 468 Td (- Machine B [SMT Robot #4] places MCU-900 chipsets onto multilayer motherboard PCBs.) Tj ET
+BT /F1 9 Tf 50 450 Td (- Output: Vehicle Central Avionics and Electronic Control Unit [ECU Sub-assembly].) Tj ET
+BT /F1 9 Tf 50 432 Td (- Dependency: Line 2 output feeds directly into Final Vehicle Synthesis on Line 3.) Tj ET
+BT /F1 9 Tf 50 414 Td (Line 3: Final Vehicle Synthesis) Tj ET
+BT /F1 9 Tf 50 396 Td (- Merges chassis, Line 1 powertrain assemblies, Line 2 ECU modules, and sensor harnes) Tj ET
+BT /F1 9 Tf 50 378 Td (- Outputs finished commercial products: Voltra Model V-1 and Voltra Commercial Fleet ) Tj ET
+BT /F1 9 Tf 50 360 Td (- CRITICAL PATH: Failure of Line 2 ECU Sub-assembly halts Line 3 final road-readiness) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000002377 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+2447
+%%EOF

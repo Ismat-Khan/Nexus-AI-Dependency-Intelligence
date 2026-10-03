@@ -1,0 +1,25 @@
+VOLTRA MOBILITY // MANUFACTURING PROCESS SPECIFICATION
+Document ID: PROC-2026-ENG-08
+Classification: Internal Manufacturing Standard
+
+1. EXECUTIVE OVERVIEW
+Voltra Mobility operates a continuous synchronous automotive production line for two commercial EV platforms:
+- Voltra Model V-1 (All-electric urban passenger sedan, target 500 units/day)
+- Voltra Commercial Fleet Van (Light commercial delivery van, target 150 units/day)
+
+2. ASSEMBLY LINE ARCHITECTURE & DEPENDENCIES
+Line 1: Powertrain Integration
+- Integrates Electric Traction Motor Stator assemblies and high-voltage battery modules.
+- Output: Complete high-voltage chassis powertrain unit. Feeds directly into Line 3.
+
+Line 2: ECU Sub-assembly & Avionics
+- Primary Machine: SMT Robot #4 (Surface Mount Technology high-speed placer).
+- Required Component: Microcontroller MCU-900 (Supplied exclusively by Apex Microelectronics).
+- Machine B (SMT Robot #4) places MCU-900 chipsets onto multilayer motherboard PCBs.
+- Output: Vehicle Central Avionics and Electronic Control Unit (ECU Sub-assembly).
+- Dependency: Line 2 output feeds directly into Final Vehicle Synthesis on Line 3.
+
+Line 3: Final Vehicle Synthesis
+- Merges chassis, Line 1 powertrain assemblies, Line 2 ECU modules, and sensor harnesses.
+- Outputs finished commercial products: Voltra Model V-1 and Voltra Commercial Fleet Van.
+- CRITICAL PATH: Failure of Line 2 ECU Sub-assembly halts Line 3 final road-readiness certification immediately.

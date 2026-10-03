@@ -1,0 +1,16 @@
+VOLTRA MOBILITY // MASTER SUPPLY AGREEMENTS SUMMARY
+Legal Repository: LEGAL-MSA-2025-ARCHIVE
+
+CONTRACT MSA-4401: APEX MICROELECTRONICS
+- Parties: Voltra Mobility Inc. & Apex Microelectronics Corp.
+- Component: Microcontroller MCU-900 (Automotive Grade 32-bit SoC).
+- Section 3 (Sole Sourcing & Exclusivity): Apex Microelectronics is designated as the EXCLUSIVE supplier for MCU-900. Voltra covenants not to procure compatible silicon from alternative foundries.
+- Section 7 (Backup & Contingency): NO certified secondary foundry exists. Requalification of alternative silicon requires automotive safety certification (ISO 26262 ASIL-D) taking a minimum of 90 days.
+- SOURCING STATUS: SINGLE POINT OF FAILURE. No documented backup supplier certified.
+
+CONTRACT MSA-8812: VOLTCELL ENERGY
+- Parties: Voltra Mobility Inc. & VoltCell Energy Ltd.
+- Component: Lithium-Ion Battery Cells (4680 cylindrical format).
+- Section 8.2 (Emergency Secondary Sourcing): In the event of supply interruption exceeding 48 hours, Voltra Mobility is pre-authorized to activate approved secondary supplier Amperex Dynamics.
+- Activation SLA: Guaranteed initial shipment within 3 business days from Amperex Dynamics domestic facility.
+- SOURCING STATUS: PROTECTED BY CERTIFIED BACKUP.
