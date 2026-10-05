@@ -207,8 +207,8 @@ if curr_state:
 
 st.markdown("<br/>", unsafe_allow_html=True)
 
-# 4. Scenario Lab Section
-    if curr_state:
+# 4. Scenario Lab
+if curr_state:
 st.markdown("""
 <div class="nexus-card">
   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
