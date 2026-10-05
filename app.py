@@ -246,19 +246,47 @@ with p3:
 # Scenario Query Input
 scenario_query = st.text_input(
     "Enter failure query or hypothesis:",
-    value=st.session_state.current_scenario,
-    placeholder="e.g., What happens if Supplier A is unavailable for 7 days?"
+    value="",
+    placeholder="What happens if Supplier A is unavailable for 7 days?"
 )
 
-run_button = st.button("⚡ Run Deterministic Failure Simulation", type="primary", use_container_width=True)
+run_button = st.button(
+    "⚡ Run Deterministic Failure Simulation",
+    type="primary",
+    use_container_width=True
+)
 
+# Use typed query normally.
+# For Demo Presets, use the scenario stored in session state.
 if run_button or st.session_state.get("trigger_sim", False):
+
     st.session_state.trigger_sim = False
-    with st.spinner("Executing CASCADE -> SENTINEL -> AEGIS multi-agent pipeline..."):
-        res = st.session_state.pipeline.run_scenario(scenario_query, use_llm=groq_active)
+
+    if run_button:
+        query_to_run = scenario_query.strip()
+
+        if not query_to_run:
+            st.warning("Please enter a failure scenario before running the simulation.")
+            st.stop()
+
+    else:
+        query_to_run = st.session_state.current_scenario
+
+    # Keep the current scenario synchronized with the query being executed.
+    st.session_state.current_scenario = query_to_run
+
+    with st.spinner(
+        "Executing CASCADE -> SENTINEL -> AEGIS multi-agent pipeline..."
+    ):
+        res = st.session_state.pipeline.run_scenario(
+            query_to_run,
+            use_llm=groq_active
+        )
+
         st.session_state.scenario_result = res
         st.session_state.selected_failed_node = res["failed_node"]
         st.session_state.affected_nodes = res["impact_result"].all_affected_nodes
+
         st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
