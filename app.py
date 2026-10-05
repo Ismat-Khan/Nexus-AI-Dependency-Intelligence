@@ -208,8 +208,7 @@ if curr_state:
 st.markdown("<br/>", unsafe_allow_html=True)
 
 # 4. Scenario Lab
-if curr_state:
-    st.markdown("""
+st.markdown("""
     <div class="nexus-card">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div>
@@ -230,34 +229,22 @@ if curr_state:
     render_voice_panel(briefing_text=_briefing_text)
 
     # Quick Preset Buttons
-    st.markdown(
-        "<div style='font-size: 0.8rem; color: #94A3B8; margin-bottom: 6px; font-weight: 600;'>DEMO PRESETS:</div>",
-        unsafe_allow_html=True
-    )
-
+if curr_state:
+    st.markdown("<div style='font-size: 0.8rem; color: #94A3B8; margin-bottom: 6px; font-weight: 600;'>DEMO PRESETS:</div>", unsafe_allow_html=True)
     p1, p2, p3 = st.columns(3)
 
-    with p1:
-        if st.button(
-            "🚨 Case 1: Supplier A fails for 7 days (SPOF)",
-            use_container_width=True
-        ):
+        with p1:
+        if st.button("🚨 Case 1: Supplier A fails for 7 days (SPOF)", use_container_width=True):
             st.session_state.current_scenario = "What happens if Supplier A is unavailable for 7 days?"
             st.session_state.trigger_sim = True
 
     with p2:
-        if st.button(
-            "🛡️ Case 2: VoltCell fails for 14 days (Backup)",
-            use_container_width=True
-        ):
+        if st.button("🛡️ Case 2: VoltCell fails for 14 days (Backup)", use_container_width=True):
             st.session_state.current_scenario = "What happens if VoltCell Energy is unavailable for 14 days?"
             st.session_state.trigger_sim = True
 
     with p3:
-        if st.button(
-            "⚙️ Case 3: SMT Robot #4 fails for 2 days",
-            use_container_width=True
-        ):
+        if st.button("⚙️ Case 3: SMT Robot #4 fails for 2 days", use_container_width=True):
             st.session_state.current_scenario = "What happens if SMT Robot #4 fails for 2 days?"
             st.session_state.trigger_sim = True
 
