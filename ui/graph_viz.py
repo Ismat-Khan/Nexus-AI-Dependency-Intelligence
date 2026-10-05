@@ -221,8 +221,8 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
 
     let lastTouchDistance = null;
 
-    // Touchpad two-finger pinch = graph zoom.
     // Normal mouse wheel = page scrolling.
+    // Touchpad two-finger pinch = graph zoom.
     // Mouse drag = move the graph.
 
     let lastTouchDistance = null;
@@ -234,20 +234,12 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
         event.preventDefault();
 
         const currentScale = network.getScale();
-
-        // Safe zoom limits prevent the graph from disappearing.
         const minScale = 0.35;
         const maxScale = 2.5;
 
-        let newScale;
-
-        if (event.deltaY < 0) {{
-          // Pinch OUT = zoom IN
-          newScale = Math.min(currentScale * 1.06, maxScale);
-        }} else {{
-          // Pinch IN = zoom OUT
-          newScale = Math.max(currentScale * 0.94, minScale);
-        }}
+        const newScale = event.deltaY < 0
+          ? Math.min(currentScale * 1.06, maxScale)
+          : Math.max(currentScale * 0.94, minScale);
 
         network.moveTo({{
           scale: newScale,
@@ -257,9 +249,6 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
           }}
         }});
       }}
-
-      // Normal mouse wheel is not prevented.
-      // Therefore the page scrolls normally.
     }}, {{ passive: false }});
 
 
@@ -269,7 +258,6 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
       if (event.touches.length === 2) {{
         const dx = event.touches[0].clientX - event.touches[1].clientX;
         const dy = event.touches[0].clientY - event.touches[1].clientY;
-
         lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
       }}
     }}, {{ passive: true }});
@@ -284,25 +272,17 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
 
       const dx = event.touches[0].clientX - event.touches[1].clientX;
       const dy = event.touches[0].clientY - event.touches[1].clientY;
-
       const currentDistance = Math.sqrt(dx * dx + dy * dy);
       const difference = currentDistance - lastTouchDistance;
 
       if (Math.abs(difference) > 1) {{
         const currentScale = network.getScale();
-
         const minScale = 0.35;
         const maxScale = 2.5;
 
-        let newScale;
-
-        if (difference > 0) {{
-          // Fingers moving apart = zoom IN
-          newScale = Math.min(currentScale * 1.03, maxScale);
-        }} else {{
-          // Fingers moving together = zoom OUT
-          newScale = Math.max(currentScale * 0.97, minScale);
-        }}
+        const newScale = difference > 0
+          ? Math.min(currentScale * 1.03, maxScale)
+          : Math.max(currentScale * 0.97, minScale);
 
         network.moveTo({{
           scale: newScale,
