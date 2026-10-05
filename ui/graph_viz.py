@@ -221,37 +221,49 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
 
     let lastTouchDistance = null;
 
+    // Touchpad two-finger pinch = graph zoom.
+    // Normal mouse wheel = page scrolling.
+    // Mouse drag = move the graph.
+
+    let lastTouchDistance = null;
+
     // Touchpad pinch-to-zoom.
-    // Browsers normally report a two-finger pinch as ctrlKey + wheel.
+    // Chrome/Edge normally report a touchpad pinch as ctrlKey + wheel.
     container.addEventListener("wheel", function(event) {{
       if (event.ctrlKey || event.metaKey) {{
         event.preventDefault();
 
-        const rect = container.getBoundingClientRect();
+        const currentScale = network.getScale();
 
-        const pointer = {{
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top
-        }};
+        // Safe zoom limits prevent the graph from disappearing.
+        const minScale = 0.35;
+        const maxScale = 2.5;
 
-        const scaleFactor = event.deltaY < 0 ? 1.08 : 0.92;
+        let newScale;
+
+        if (event.deltaY < 0) {{
+          // Pinch OUT = zoom IN
+          newScale = Math.min(currentScale * 1.06, maxScale);
+        }} else {{
+          // Pinch IN = zoom OUT
+          newScale = Math.max(currentScale * 0.94, minScale);
+        }}
 
         network.moveTo({{
-          position: network.DOMtoCanvas(pointer),
-          scale: network.getScale() * scaleFactor,
+          scale: newScale,
           animation: {{
-            duration: 100,
+            duration: 80,
             easingFunction: "easeInOutQuad"
           }}
         }});
       }}
 
-      // Normal mouse-wheel scrolling is not prevented.
-      // Therefore the webpage scrolls normally.
+      // Normal mouse wheel is not prevented.
+      // Therefore the page scrolls normally.
     }}, {{ passive: false }});
 
 
-    // Extra support for devices that send actual touch events.
+    // Extra support for devices that send real touch events.
     // Two fingers = pinch zoom.
     container.addEventListener("touchstart", function(event) {{
       if (event.touches.length === 2) {{
@@ -274,16 +286,26 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
       const dy = event.touches[0].clientY - event.touches[1].clientY;
 
       const currentDistance = Math.sqrt(dx * dx + dy * dy);
-
       const difference = currentDistance - lastTouchDistance;
 
       if (Math.abs(difference) > 1) {{
         const currentScale = network.getScale();
 
-        const zoomFactor = difference > 0 ? 1.03 : 0.97;
+        const minScale = 0.35;
+        const maxScale = 2.5;
+
+        let newScale;
+
+        if (difference > 0) {{
+          // Fingers moving apart = zoom IN
+          newScale = Math.min(currentScale * 1.03, maxScale);
+        }} else {{
+          // Fingers moving together = zoom OUT
+          newScale = Math.max(currentScale * 0.97, minScale);
+        }}
 
         network.moveTo({{
-          scale: currentScale * zoomFactor,
+          scale: newScale,
           animation: {{
             duration: 50,
             easingFunction: "linear"
@@ -300,6 +322,7 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
         lastTouchDistance = null;
       }}
     }}, {{ passive: true }});
+
 
     // Inspector Click Handler
     network.on("click", function(params) {{
