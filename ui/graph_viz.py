@@ -217,15 +217,15 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
 
     // Keep graph panning enabled after zooming.
     // Left mouse drag moves the graph without changing zoom.
-    network.setOptions({
-      interaction: {
+    network.setOptions({{
+      interaction: {{
         hover: true,
         tooltipDelay: 100,
         zoomView: false,
         dragView: true,
         dragNodes: false
-      }
-    });
+      }}
+    }});
 
     // Normal mouse wheel = page scrolling.
     // Touchpad two-finger pinch = graph zoom.
