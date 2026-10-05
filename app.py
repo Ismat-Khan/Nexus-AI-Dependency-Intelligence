@@ -209,88 +209,105 @@ st.markdown("<br/>", unsafe_allow_html=True)
 
 # 4. Scenario Lab
 if curr_state:
-st.markdown("""
-<div class="nexus-card">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-    <div>
-      <span class="badge-ai">CASCADE SCENARIO LAB</span>
-      <h3 style="margin: 4px 0 0 0; font-size: 1.4rem; color: #F8FAFC;">Simulate Failure & Supply Chain Shocks</h3>
-    </div>
-  </div>
-""", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="nexus-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <span class="badge-ai">CASCADE SCENARIO LAB</span>
+          <h3 style="margin: 4px 0 0 0; font-size: 1.4rem; color: #F8FAFC;">Simulate Failure & Supply Chain Shocks</h3>
+        </div>
+      </div>
+    """, unsafe_allow_html=True)
 
-# Voice Interface Component (Web Speech API)
-#components.html(render_voice_interface(), height=130)
-# Voice Interface — native Streamlit (gTTS + st.audio, no iframe sandboxing)
-_briefing_text = None
-if st.session_state.scenario_result:
-    _briefing_text = st.session_state.scenario_result.get("narrative", None)
-render_voice_panel(briefing_text=_briefing_text)
+    # Voice Interface Component (Web Speech API)
+    #components.html(render_voice_interface(), height=130)
 
-# Quick Preset Buttons
-st.markdown("<div style='font-size: 0.8rem; color: #94A3B8; margin-bottom: 6px; font-weight: 600;'>DEMO PRESETS:</div>", unsafe_allow_html=True)
-p1, p2, p3 = st.columns(3)
+    # Voice Interface — native Streamlit
+    _briefing_text = None
+    if st.session_state.scenario_result:
+        _briefing_text = st.session_state.scenario_result.get("narrative", None)
 
-with p1:
-    if st.button("🚨 Case 1: Supplier A fails for 7 days (SPOF)", use_container_width=True):
-        st.session_state.current_scenario = "What happens if Supplier A is unavailable for 7 days?"
-        st.session_state.trigger_sim = True
-with p2:
-    if st.button("🛡️ Case 2: VoltCell fails for 14 days (Backup)", use_container_width=True):
-        st.session_state.current_scenario = "What happens if VoltCell Energy is unavailable for 14 days?"
-        st.session_state.trigger_sim = True
-with p3:
-    if st.button("⚙️ Case 3: SMT Robot #4 fails for 2 days", use_container_width=True):
-        st.session_state.current_scenario = "What happens if SMT Robot #4 fails for 2 days?"
-        st.session_state.trigger_sim = True
+    render_voice_panel(briefing_text=_briefing_text)
 
-# Scenario Query Input
-scenario_query = st.text_input(
-    "Enter failure query or hypothesis:",
-    value="",
-    placeholder="What happens if Supplier A is unavailable for 7 days?"
-)
+    # Quick Preset Buttons
+    st.markdown(
+        "<div style='font-size: 0.8rem; color: #94A3B8; margin-bottom: 6px; font-weight: 600;'>DEMO PRESETS:</div>",
+        unsafe_allow_html=True
+    )
 
-run_button = st.button(
-    "⚡ Run Deterministic Failure Simulation",
-    type="primary",
-    use_container_width=True
-)
+    p1, p2, p3 = st.columns(3)
 
-# Use typed query normally.
-# For Demo Presets, use the scenario stored in session state.
-if run_button or st.session_state.get("trigger_sim", False):
+    with p1:
+        if st.button(
+            "🚨 Case 1: Supplier A fails for 7 days (SPOF)",
+            use_container_width=True
+        ):
+            st.session_state.current_scenario = "What happens if Supplier A is unavailable for 7 days?"
+            st.session_state.trigger_sim = True
 
-    st.session_state.trigger_sim = False
+    with p2:
+        if st.button(
+            "🛡️ Case 2: VoltCell fails for 14 days (Backup)",
+            use_container_width=True
+        ):
+            st.session_state.current_scenario = "What happens if VoltCell Energy is unavailable for 14 days?"
+            st.session_state.trigger_sim = True
 
-    if run_button:
-        query_to_run = scenario_query.strip()
+    with p3:
+        if st.button(
+            "⚙️ Case 3: SMT Robot #4 fails for 2 days",
+            use_container_width=True
+        ):
+            st.session_state.current_scenario = "What happens if SMT Robot #4 fails for 2 days?"
+            st.session_state.trigger_sim = True
 
-        if not query_to_run:
-            st.warning("Please enter a failure scenario before running the simulation.")
-            st.stop()
+    # Scenario Query Input
+    scenario_query = st.text_input(
+        "Enter failure query or hypothesis:",
+        value="",
+        placeholder="What happens if Supplier A is unavailable for 7 days?"
+    )
 
-    else:
-        query_to_run = st.session_state.current_scenario
+    run_button = st.button(
+        "⚡ Run Deterministic Failure Simulation",
+        type="primary",
+        use_container_width=True
+    )
 
-    # Keep the current scenario synchronized with the query being executed.
-    st.session_state.current_scenario = query_to_run
+    # Use typed query normally.
+    # For Demo Presets, use the scenario stored in session state.
+    if run_button or st.session_state.get("trigger_sim", False):
 
-    with st.spinner(
-        "Executing CASCADE -> SENTINEL -> AEGIS multi-agent pipeline..."
-    ):
-        res = st.session_state.pipeline.run_scenario(
-            query_to_run,
-            use_llm=groq_active
-        )
+        st.session_state.trigger_sim = False
 
-        st.session_state.scenario_result = res
-        st.session_state.selected_failed_node = res["failed_node"]
-        st.session_state.affected_nodes = res["impact_result"].all_affected_nodes
+        if run_button:
+            query_to_run = scenario_query.strip()
 
-        st.rerun()
+            if not query_to_run:
+                st.warning("Please enter a failure scenario before running the simulation.")
+                st.stop()
 
-st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            query_to_run = st.session_state.current_scenario
+
+        # Keep the current scenario synchronized with the query being executed.
+        st.session_state.current_scenario = query_to_run
+
+        with st.spinner(
+            "Executing CASCADE -> SENTINEL -> AEGIS multi-agent pipeline..."
+        ):
+            res = st.session_state.pipeline.run_scenario(
+                query_to_run,
+                use_llm=groq_active
+            )
+
+            st.session_state.scenario_result = res
+            st.session_state.selected_failed_node = res["failed_node"]
+            st.session_state.affected_nodes = res["impact_result"].all_affected_nodes
+
+            st.rerun()
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # 5. Live Agent Swarm Execution Monitor
 render_agent_activity_feed(st.session_state.agent_statuses)
