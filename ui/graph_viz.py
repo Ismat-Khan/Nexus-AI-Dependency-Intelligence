@@ -214,92 +214,92 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
     }};
 
     const network = new vis.Network(container, data, options);
+
     // Normal mouse wheel = page scrolling.
-// Touchpad two-finger pinch = graph zoom.
-// Mouse drag = move the graph.
+    // Touchpad two-finger pinch = graph zoom.
+    // Mouse drag = move the graph.
 
-let lastTouchDistance = null;
+    let lastTouchDistance = null;
 
-container.addEventListener("wheel", function(event) {
-  // Detect touchpad pinch gesture.
-  // On most browsers, pinch-to-zoom is reported as ctrlKey + wheel.
-  if (event.ctrlKey || event.metaKey) {
-    event.preventDefault();
+    // Touchpad pinch-to-zoom.
+    // Browsers normally report a two-finger pinch as ctrlKey + wheel.
+    container.addEventListener("wheel", function(event) {{
+      if (event.ctrlKey || event.metaKey) {{
+        event.preventDefault();
 
-    const rect = container.getBoundingClientRect();
+        const rect = container.getBoundingClientRect();
 
-    const pointer = {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    };
+        const pointer = {{
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top
+        }};
 
-    const scaleFactor = event.deltaY < 0 ? 1.08 : 0.92;
+        const scaleFactor = event.deltaY < 0 ? 1.08 : 0.92;
 
-    network.moveTo({
-      position: network.DOMtoCanvas(pointer),
-      scale: network.getScale() * scaleFactor,
-      animation: {
-        duration: 100,
-        easingFunction: "easeInOutQuad"
-      }
-    });
-  }
+        network.moveTo({{
+          position: network.DOMtoCanvas(pointer),
+          scale: network.getScale() * scaleFactor,
+          animation: {{
+            duration: 100,
+            easingFunction: "easeInOutQuad"
+          }}
+        }});
+      }}
 
-  // IMPORTANT:
-  // Normal mouse-wheel scrolling is NOT prevented.
-  // Therefore the webpage scrolls normally.
-}, { passive: false });
-
-
-// Extra touch support for devices that send actual touch events.
-// Two fingers = pinch zoom.
-container.addEventListener("touchstart", function(event) {
-  if (event.touches.length === 2) {
-    const dx = event.touches[0].clientX - event.touches[1].clientX;
-    const dy = event.touches[0].clientY - event.touches[1].clientY;
-
-    lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
-  }
-}, { passive: true });
+      // Normal mouse-wheel scrolling is not prevented.
+      // Therefore the webpage scrolls normally.
+    }}, {{ passive: false }});
 
 
-container.addEventListener("touchmove", function(event) {
-  if (event.touches.length !== 2 || lastTouchDistance === null) {
-    return;
-  }
+    // Extra support for devices that send actual touch events.
+    // Two fingers = pinch zoom.
+    container.addEventListener("touchstart", function(event) {{
+      if (event.touches.length === 2) {{
+        const dx = event.touches[0].clientX - event.touches[1].clientX;
+        const dy = event.touches[0].clientY - event.touches[1].clientY;
 
-  event.preventDefault();
-
-  const dx = event.touches[0].clientX - event.touches[1].clientX;
-  const dy = event.touches[0].clientY - event.touches[1].clientY;
-
-  const currentDistance = Math.sqrt(dx * dx + dy * dy);
-
-  const difference = currentDistance - lastTouchDistance;
-
-  if (Math.abs(difference) > 1) {
-    const currentScale = network.getScale();
-
-    const zoomFactor = difference > 0 ? 1.03 : 0.97;
-
-    network.moveTo({
-      scale: currentScale * zoomFactor,
-      animation: {
-        duration: 50,
-        easingFunction: "linear"
-      }
-    });
-
-    lastTouchDistance = currentDistance;
-  }
-}, { passive: false });
+        lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
+      }}
+    }}, {{ passive: true }});
 
 
-container.addEventListener("touchend", function(event) {
-  if (event.touches.length < 2) {
-    lastTouchDistance = null;
-  }
-}, { passive: true });
+    container.addEventListener("touchmove", function(event) {{
+      if (event.touches.length !== 2 || lastTouchDistance === null) {{
+        return;
+      }}
+
+      event.preventDefault();
+
+      const dx = event.touches[0].clientX - event.touches[1].clientX;
+      const dy = event.touches[0].clientY - event.touches[1].clientY;
+
+      const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+      const difference = currentDistance - lastTouchDistance;
+
+      if (Math.abs(difference) > 1) {{
+        const currentScale = network.getScale();
+
+        const zoomFactor = difference > 0 ? 1.03 : 0.97;
+
+        network.moveTo({{
+          scale: currentScale * zoomFactor,
+          animation: {{
+            duration: 50,
+            easingFunction: "linear"
+          }}
+        }});
+
+        lastTouchDistance = currentDistance;
+      }}
+    }}, {{ passive: false }});
+
+
+    container.addEventListener("touchend", function(event) {{
+      if (event.touches.length < 2) {{
+        lastTouchDistance = null;
+      }}
+    }}, {{ passive: true }});
 
     // Inspector Click Handler
     network.on("click", function(params) {{
@@ -334,4 +334,3 @@ container.addEventListener("touchend", function(event) {
 </html>
 """
     return html
-
