@@ -216,7 +216,7 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
     const network = new vis.Network(container, data, options);
 
     // Keep graph panning enabled after zooming.
-    // Left mouse drag moves the graph without changing zoom.
+    // Left mouse drag moves the whole graph without changing zoom.
     network.setOptions({{
       interaction: {{
         hover: true,
@@ -224,6 +224,80 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
         zoomView: false,
         dragView: true,
         dragNodes: false
+      }}
+    }});
+
+    // Explicit graph panning.
+    // This makes left/right/up/down movement reliable even after zooming.
+    // It does not change the zoom level.
+    let isPanningGraph = false;
+    let panStartX = 0;
+    let panStartY = 0;
+    let panStartViewX = 0;
+    let panStartViewY = 0;
+
+    container.addEventListener("mousedown", function(event) {{
+      // Only the primary mouse button starts panning.
+      if (event.button !== 0) {{
+        return;
+      }}
+
+      // Do not start panning when clicking directly on a node.
+      const pointer = {{
+        x: event.clientX - container.getBoundingClientRect().left,
+        y: event.clientY - container.getBoundingClientRect().top
+      }};
+      const clickedNode = network.getNodeAt(pointer);
+
+      if (clickedNode !== undefined && clickedNode !== null) {{
+        return;
+      }}
+
+      isPanningGraph = true;
+      panStartX = event.clientX;
+      panStartY = event.clientY;
+
+      const viewPosition = network.getViewPosition();
+      panStartViewX = viewPosition.x;
+      panStartViewY = viewPosition.y;
+
+      container.style.cursor = "grabbing";
+      event.preventDefault();
+    }});
+
+    container.addEventListener("mousemove", function(event) {{
+      if (!isPanningGraph) {{
+        return;
+      }}
+
+      const scale = network.getScale();
+
+      const dx = event.clientX - panStartX;
+      const dy = event.clientY - panStartY;
+
+      network.moveTo({{
+        position: {{
+          x: panStartViewX - (dx / scale),
+          y: panStartViewY - (dy / scale)
+        }},
+        scale: scale,
+        animation: false
+      }});
+
+      event.preventDefault();
+    }});
+
+    container.addEventListener("mouseup", function() {{
+      if (isPanningGraph) {{
+        isPanningGraph = false;
+        container.style.cursor = "default";
+      }}
+    }});
+
+    container.addEventListener("mouseleave", function() {{
+      if (isPanningGraph) {{
+        isPanningGraph = false;
+        container.style.cursor = "default";
       }}
     }});
 
