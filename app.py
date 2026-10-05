@@ -61,11 +61,6 @@ def agent_callback(agent_name: str, status: str, detail: str):
 
 st.session_state.pipeline.engine.status_callback = agent_callback
 
-# Load initial Voltra Mobility demo if empty
-if not st.session_state.pipeline.current_state:
-    st.session_state.pipeline.load_demo()
-
-
 # ---------------------------------------------------------
 # SIDEBAR: Control Center & Environment Configuration
 # ---------------------------------------------------------
@@ -160,49 +155,55 @@ with st.sidebar:
 render_hero_header()
 
 curr_state = st.session_state.pipeline.current_state
-is_demo = curr_state.get("is_demo", True)
-render_pipeline_badge(is_live=not is_demo, model_name=PREFERRED_MODEL)
 
-# 2. Executive Metrics Dashboard
-metrics = curr_state.get("metrics", {})
-docs_count = len(curr_state.get("file_names", []))
-entities_count = len(curr_state.get("entities", []))
-deps_count = len(curr_state.get("dependencies", []))
-critical_links = len(metrics.get("spofs", [])) + 2
-spof_count = metrics.get("spof_count", 0)
+# Only show dataset-dependent information after data is loaded
+if curr_state:
+    is_demo = curr_state.get("is_demo", False)
+    render_pipeline_badge(is_live=not is_demo, model_name=PREFERRED_MODEL)
 
-render_metrics_dashboard(
-    docs_count=docs_count,
-    entities_count=entities_count,
-    deps_count=deps_count,
-    critical_deps_count=critical_links,
-    spof_count=spof_count
-)
+    # 2. Executive Metrics Dashboard
+    metrics = curr_state.get("metrics", {})
+    docs_count = len(curr_state.get("file_names", []))
+    entities_count = len(curr_state.get("entities", []))
+    deps_count = len(curr_state.get("dependencies", []))
+    critical_links = len(metrics.get("spofs", [])) + 2
+    spof_count = metrics.get("spof_count", 0)
 
-st.markdown("<br/>", unsafe_allow_html=True)
+    render_metrics_dashboard(
+        docs_count=docs_count,
+        entities_count=entities_count,
+        deps_count=deps_count,
+        critical_deps_count=critical_links,
+        spof_count=spof_count
+    )
 
+    st.markdown("<br/>", unsafe_allow_html=True)
 # 3. Interactive Dependency Graph Section
-st.markdown("""
-<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
-  <div>
-    <span style="font-size: 0.8rem; font-weight: 700; color: #22D3EE; letter-spacing: 0.08em; text-transform: uppercase;">Topological Model</span>
-    <h3 style="margin: 0; font-size: 1.4rem; color: #F8FAFC;">GRAPHFORGE Interactive Dependency Graph</h3>
-  </div>
-  <div style="font-size: 0.8rem; color: #94A3B8;">Click any node to inspect metadata and evidence</div>
-</div>
-""", unsafe_allow_html=True)
+if curr_state:
+    st.markdown("""
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+      <div>
+        <span style="font-size: 0.8rem; font-weight: 700; color: #22D3EE; letter-spacing: 0.08em; text-transform: uppercase;">Topological Model</span>
+        <h3 style="margin: 0; font-size: 1.4rem; color: #F8FAFC;">GRAPHFORGE Interactive Dependency Graph</h3>
+      </div>
+      <div style="font-size: 0.8rem; color: #94A3B8;">Click any node to inspect metadata and evidence</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-graph = curr_state.get("graph")
-forge_agent = GraphForgeAgent()
+    graph = curr_state.get("graph")
 
-# Export graph for Vis.js visualization
-graph_export = forge_agent.export_graph_for_visualization(
-    graph,
-    failed_node=st.session_state.selected_failed_node,
-    affected_nodes=st.session_state.affected_nodes
-)
-graph_html = generate_interactive_graph_html(graph_export, height=520)
-components.html(graph_html, height=530)
+    if graph:
+        forge_agent = GraphForgeAgent()
+
+        # Export graph for Vis.js visualization
+        graph_export = forge_agent.export_graph_for_visualization(
+            graph,
+            failed_node=st.session_state.selected_failed_node,
+            affected_nodes=st.session_state.affected_nodes
+        )
+
+        graph_html = generate_interactive_graph_html(graph_export, height=520)
+        components.html(graph_html, height=530)
 
 st.markdown("<br/>", unsafe_allow_html=True)
 
