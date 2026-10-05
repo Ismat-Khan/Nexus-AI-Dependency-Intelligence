@@ -221,14 +221,8 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
 
     let lastTouchDistance = null;
 
-    // Normal mouse wheel = page scrolling.
-    // Touchpad two-finger pinch = graph zoom.
-    // Mouse drag = move the graph.
-
-    let lastTouchDistance = null;
-
-    // Touchpad pinch-to-zoom.
     // Chrome/Edge normally report a touchpad pinch as ctrlKey + wheel.
+    // This does NOT require the user to physically press Ctrl.
     container.addEventListener("wheel", function(event) {{
       if (event.ctrlKey || event.metaKey) {{
         event.preventDefault();
@@ -251,9 +245,7 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
       }}
     }}, {{ passive: false }});
 
-
     // Extra support for devices that send real touch events.
-    // Two fingers = pinch zoom.
     container.addEventListener("touchstart", function(event) {{
       if (event.touches.length === 2) {{
         const dx = event.touches[0].clientX - event.touches[1].clientX;
@@ -261,7 +253,6 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
         lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
       }}
     }}, {{ passive: true }});
-
 
     container.addEventListener("touchmove", function(event) {{
       if (event.touches.length !== 2 || lastTouchDistance === null) {{
@@ -296,13 +287,11 @@ def generate_interactive_graph_html(graph_export: Dict[str, Any], height: int = 
       }}
     }}, {{ passive: false }});
 
-
     container.addEventListener("touchend", function(event) {{
       if (event.touches.length < 2) {{
         lastTouchDistance = null;
       }}
     }}, {{ passive: true }});
-
 
     // Inspector Click Handler
     network.on("click", function(params) {{
