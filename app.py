@@ -406,7 +406,7 @@ if run_button or st.session_state.get("trigger_sim", False):
     st.session_state.trigger_sim = False
 
     # ---------------------------------------------------------
-    # 1. Make sure a dataset is loaded
+    # 1. Check whether any organizational data is loaded
     # ---------------------------------------------------------
 
     if not curr_state:
@@ -439,7 +439,7 @@ if run_button or st.session_state.get("trigger_sim", False):
 
 
         # ---------------------------------------------------------
-        # 3. Check whether this is actually a failure scenario
+        # 3. Check whether this is a failure-simulation question
         # ---------------------------------------------------------
 
         query_lower = query_to_run.lower()
@@ -447,6 +447,7 @@ if run_button or st.session_state.get("trigger_sim", False):
         failure_keywords = [
             "fail",
             "failure",
+            "fails",
             "unavailable",
             "outage",
             "breakdown",
@@ -458,8 +459,6 @@ if run_button or st.session_state.get("trigger_sim", False):
             "offline",
             "down",
             "lost",
-            "unavailable for",
-            "fails for",
             "cannot supply",
             "can't supply"
         ]
@@ -471,79 +470,77 @@ if run_button or st.session_state.get("trigger_sim", False):
 
 
         # ---------------------------------------------------------
-        # 4. Check whether the question refers to uploaded data
-        # ---------------------------------------------------------
-
-        graph = curr_state.get("graph")
-
-        entity_names = []
-
-        if graph:
-
-            try:
-                entity_names = [
-                    str(node).lower()
-                    for node in graph.nodes()
-                ]
-            except Exception:
-                entity_names = []
-
-        mentions_dataset_entity = any(
-            entity_name in query_lower
-            for entity_name in entity_names
-            if len(entity_name.strip()) >= 3
-        )
-
-
-        # ---------------------------------------------------------
-        # 5. Reject unrelated/general questions
+        # 4. Handle general / unrelated questions
         # ---------------------------------------------------------
 
         if not is_failure_question:
 
             st.info(
-                "ℹ️ This question is not a failure-simulation scenario. "
-                "Please ask what happens when an entity, supplier, machine, "
-                "system, or service from the uploaded data fails or becomes unavailable."
-            )
-
-        elif not mentions_dataset_entity:
-
-            st.info(
-                "ℹ️ This scenario does not appear to relate to an entity "
-                "in the uploaded organizational data. "
-                "Please mention a supplier, component, machine, system, "
-                "service, or other entity from the uploaded data."
+                "ℹ️ This is not a failure-simulation scenario. "
+                "Please ask about a failure involving an entity "
+                "from the uploaded organizational data."
             )
 
         else:
 
-            # ---------------------------------------------------------
-            # 6. Run the actual deterministic simulation
-            # ---------------------------------------------------------
+            # -----------------------------------------------------
+            # 5. Run the actual NEXUS failure simulation
+            #
+            # The pipeline itself determines whether the entity
+            # exists in the uploaded dependency graph.
+            # -----------------------------------------------------
 
             st.session_state.current_scenario = query_to_run
 
-            with st.spinner(
-                "Executing CASCADE -> SENTINEL -> AEGIS multi-agent pipeline..."
-            ):
+            try:
 
-                res = st.session_state.pipeline.run_scenario(
-                    query_to_run,
-                    use_llm=groq_active
-                )
+                with st.spinner(
+                    "Executing CASCADE -> SENTINEL -> AEGIS multi-agent pipeline..."
+                ):
 
-                st.session_state.scenario_result = res
+                    res = st.session_state.pipeline.run_scenario(
+                        query_to_run,
+                        use_llm=groq_active
+                    )
 
-                st.session_state.selected_failed_node = res[
-                    "failed_node"
-                ]
+                    st.session_state.scenario_result = res
 
-                st.session_state.affected_nodes = res[
-                    "impact_result"
-                ].all_affected_nodes
+                    st.session_state.selected_failed_node = res[
+                        "failed_node"
+                    ]
 
-                st.rerun()
+                    st.session_state.affected_nodes = res[
+                        "impact_result"
+                    ].all_affected_nodes
+
+                    st.rerun()
+
+            except ValueError as e:
+
+                error_message = str(e).lower()
+
+                # Friendly response when the requested entity
+                # cannot be found in the uploaded data.
+                if (
+                    "failed node" in error_message
+                    or "not found" in error_message
+                    or "entity" in error_message
+                    or "node" in error_message
+                    or "dependency graph" in error_message
+                ):
+
+                    st.info(
+                        f"ℹ️ **{query_to_run}** could not be matched "
+                        "to an entity in the uploaded organizational data. "
+                        "Please check the entity name and try again."
+                    )
+
+                else:
+
+                    st.warning(
+                        "⚠️ NEXUS could not run this failure simulation. "
+                        "Please check the scenario and try again."
+                    )
 
 
 st.markdown(
