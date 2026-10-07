@@ -5,6 +5,7 @@ Target Deployment: Streamlit Cloud / GitHub
 """
 
 import os
+import re
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -39,12 +40,15 @@ st.markdown(get_css(), unsafe_allow_html=True)
 st.components.v1.html(render_background_canvas(), height=0, width=0)
 
 
-# Session State Initialization
+# ---------------------------------------------------------
+# SESSION STATE INITIALIZATION
+# ---------------------------------------------------------
+
 if "pipeline" not in st.session_state:
     st.session_state.pipeline = NexusPipeline()
 
 if "current_scenario" not in st.session_state:
-    st.session_state.current_scenario = "What happens if Supplier A is unavailable for 7 days?"
+    st.session_state.current_scenario = ""
 
 if "scenario_result" not in st.session_state:
     st.session_state.scenario_result = None
@@ -58,8 +62,14 @@ if "selected_failed_node" not in st.session_state:
 if "affected_nodes" not in st.session_state:
     st.session_state.affected_nodes = []
 
+if "trigger_sim" not in st.session_state:
+    st.session_state.trigger_sim = False
 
-# Status update callback for agent monitoring
+
+# ---------------------------------------------------------
+# STATUS UPDATE CALLBACK
+# ---------------------------------------------------------
+
 def agent_callback(agent_name: str, status: str, detail: str):
     st.session_state.agent_statuses[agent_name] = {
         "status": status,
@@ -71,7 +81,7 @@ st.session_state.pipeline.engine.status_callback = agent_callback
 
 
 # ---------------------------------------------------------
-# SIDEBAR: Control Center & Environment Configuration
+# SIDEBAR
 # ---------------------------------------------------------
 
 with st.sidebar:
@@ -90,6 +100,7 @@ with st.sidebar:
     groq_active = is_groq_available()
 
     if groq_active:
+
         st.markdown("""
         <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid #22C55E; border-radius: 8px; padding: 10px; margin-bottom: 15px; font-size: 0.8rem; color: #22C55E;">
           <b>✓ Groq API Key Connected</b><br/>
@@ -98,6 +109,7 @@ with st.sidebar:
         """, unsafe_allow_html=True)
 
     else:
+
         st.markdown("""
         <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid #F59E0B; border-radius: 8px; padding: 10px; margin-bottom: 15px; font-size: 0.8rem; color: #F59E0B;">
           <b>⚠️ No GROQ_API_KEY Detected</b><br/>
@@ -117,22 +129,32 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Ingestion Actions
+    # -----------------------------------------------------
+    # DATA INGESTION
+    # -----------------------------------------------------
+
     st.markdown(
         "<div style='font-size: 0.8rem; font-weight: 700; color: #94A3B8; text-transform: uppercase;'>Data Ingestion</div>",
         unsafe_allow_html=True
     )
 
+    # Load Voltra Demo
     if st.button(
         "🚀 Load Voltra Mobility Demo",
         use_container_width=True,
         type="primary"
     ):
+
         with st.spinner("Loading synthetic Voltra Mobility dataset..."):
+
             st.session_state.pipeline.load_demo()
+
             st.session_state.scenario_result = None
             st.session_state.selected_failed_node = None
             st.session_state.affected_nodes = []
+            st.session_state.current_scenario = ""
+            st.session_state.trigger_sim = False
+
             st.rerun()
 
     # File Uploader
@@ -144,13 +166,16 @@ with st.sidebar:
     )
 
     if uploaded_files:
+
         if st.button(
             "⚡ Ingest & Analyze Uploaded Files",
             use_container_width=True
         ):
+
             file_payloads = []
 
             for up in uploaded_files:
+
                 file_payloads.append({
                     "name": up.name,
                     "content": up.getvalue()
@@ -159,6 +184,7 @@ with st.sidebar:
             with st.spinner(
                 "ORION & MAPPER parsing documents and generating graph..."
             ):
+
                 st.session_state.pipeline.ingest_files(
                     file_payloads,
                     use_llm=groq_active
@@ -167,6 +193,8 @@ with st.sidebar:
                 st.session_state.scenario_result = None
                 st.session_state.selected_failed_node = None
                 st.session_state.affected_nodes = []
+                st.session_state.current_scenario = ""
+                st.session_state.trigger_sim = False
 
                 st.rerun()
 
@@ -176,11 +204,16 @@ with st.sidebar:
     curr = st.session_state.pipeline.current_state
 
     if curr:
+
         st.markdown(
             f"**Dataset**: `{curr.get('organization', 'Workspace')}`"
         )
 
-        with st.expander("📁 Loaded Documents", expanded=False):
+        with st.expander(
+            "📁 Loaded Documents",
+            expanded=False
+        ):
+
             for fn in curr.get("file_names", []):
                 st.caption(f"• {fn}")
 
@@ -194,42 +227,63 @@ with st.sidebar:
 # MAIN INTERFACE
 # ---------------------------------------------------------
 
-# 1. Hero Title & Tagline
+# 1. Hero
 render_hero_header()
 
 curr_state = st.session_state.pipeline.current_state
 
 
 # ---------------------------------------------------------
-# 2. Executive Metrics Dashboard
+# 2. EXECUTIVE METRICS
 # ---------------------------------------------------------
 
 if curr_state:
 
-    is_demo = curr_state.get("is_demo", False)
+    is_demo = curr_state.get(
+        "is_demo",
+        False
+    )
 
     render_pipeline_badge(
         is_live=not is_demo,
         model_name=PREFERRED_MODEL
     )
 
-    metrics = curr_state.get("metrics", {})
+    metrics = curr_state.get(
+        "metrics",
+        {}
+    )
 
     docs_count = len(
-        curr_state.get("file_names", [])
+        curr_state.get(
+            "file_names",
+            []
+        )
     )
 
     entities_count = len(
-        curr_state.get("entities", [])
+        curr_state.get(
+            "entities",
+            []
+        )
     )
 
     deps_count = len(
-        curr_state.get("dependencies", [])
+        curr_state.get(
+            "dependencies",
+            []
+        )
     )
 
-    critical_links = len(
-        metrics.get("spofs", [])
-    ) + 2
+    critical_links = (
+        len(
+            metrics.get(
+                "spofs",
+                []
+            )
+        )
+        + 2
+    )
 
     spof_count = metrics.get(
         "spof_count",
@@ -251,7 +305,7 @@ if curr_state:
 
 
 # ---------------------------------------------------------
-# 3. Interactive Dependency Graph Section
+# 3. INTERACTIVE DEPENDENCY GRAPH
 # ---------------------------------------------------------
 
 if curr_state:
@@ -266,13 +320,14 @@ if curr_state:
     </div>
     """, unsafe_allow_html=True)
 
-    graph = curr_state.get("graph")
+    graph = curr_state.get(
+        "graph"
+    )
 
     if graph:
 
         forge_agent = GraphForgeAgent()
 
-        # Export graph for Vis.js visualization
         graph_export = forge_agent.export_graph_for_visualization(
             graph,
             failed_node=st.session_state.selected_failed_node,
@@ -297,7 +352,7 @@ st.markdown(
 
 
 # ---------------------------------------------------------
-# 4. Scenario Lab
+# 4. SCENARIO LAB
 # ---------------------------------------------------------
 
 st.markdown("""
@@ -311,13 +366,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# Voice Interface Component (Web Speech API)
-#components.html(render_voice_interface(), height=130)
+# ---------------------------------------------------------
+# VOICE INTERFACE
+# ---------------------------------------------------------
 
-# Voice Interface — native Streamlit
 _briefing_text = None
 
 if st.session_state.scenario_result:
+
     _briefing_text = st.session_state.scenario_result.get(
         "narrative",
         None
@@ -329,8 +385,8 @@ render_voice_panel(
 
 
 # ---------------------------------------------------------
-# Demo Preset Cases
-# These are shown ONLY after a dataset is loaded.
+# DEMO PRESET CASES
+# Only shown after a dataset is loaded.
 # ---------------------------------------------------------
 
 if curr_state:
@@ -348,6 +404,7 @@ if curr_state:
             "🚨 Case 1: Supplier A fails for 7 days (SPOF)",
             use_container_width=True
         ):
+
             st.session_state.current_scenario = (
                 "What happens if Supplier A is unavailable for 7 days?"
             )
@@ -360,6 +417,7 @@ if curr_state:
             "🛡️ Case 2: VoltCell fails for 14 days (Backup)",
             use_container_width=True
         ):
+
             st.session_state.current_scenario = (
                 "What happens if VoltCell Energy is unavailable for 14 days?"
             )
@@ -372,6 +430,7 @@ if curr_state:
             "⚙️ Case 3: SMT Robot #4 fails for 2 days",
             use_container_width=True
         ):
+
             st.session_state.current_scenario = (
                 "What happens if SMT Robot #4 fails for 2 days?"
             )
@@ -380,8 +439,8 @@ if curr_state:
 
 
 # ---------------------------------------------------------
-# Scenario Query Input
-# This remains visible even when no dataset is loaded.
+# SCENARIO QUERY INPUT
+# Always visible.
 # ---------------------------------------------------------
 
 scenario_query = st.text_input(
@@ -398,18 +457,29 @@ run_button = st.button(
 )
 
 
-# Use typed query normally.
-# For Demo Presets, use the scenario stored in session state.
+# ---------------------------------------------------------
+# FAILURE SIMULATION REQUEST HANDLING
+# ---------------------------------------------------------
 
-if run_button or st.session_state.get("trigger_sim", False):
+if run_button or st.session_state.get(
+    "trigger_sim",
+    False
+):
 
+    # Reset preset trigger immediately
     st.session_state.trigger_sim = False
 
-    # ---------------------------------------------------------
-    # 1. Check whether any organizational data is loaded
-    # ---------------------------------------------------------
+
+    # -----------------------------------------------------
+    # CASE 1: NO DATASET LOADED
+    # -----------------------------------------------------
 
     if not curr_state:
+
+        # Clear old result so no previous report remains visible
+        st.session_state.scenario_result = None
+        st.session_state.selected_failed_node = None
+        st.session_state.affected_nodes = []
 
         st.warning(
             "⚠️ No organizational data is loaded. "
@@ -417,78 +487,106 @@ if run_button or st.session_state.get("trigger_sim", False):
             "Voltra Mobility Demo before running a failure simulation."
         )
 
+
     else:
 
-        # ---------------------------------------------------------
-        # 2. Get the scenario query
-        # ---------------------------------------------------------
+        # -------------------------------------------------
+        # GET QUERY
+        # -------------------------------------------------
 
         if run_button:
 
             query_to_run = scenario_query.strip()
 
             if not query_to_run:
+
                 st.warning(
                     "Please enter a failure scenario before running the simulation."
                 )
+
                 st.stop()
 
         else:
 
-            query_to_run = st.session_state.current_scenario
+            query_to_run = (
+                st.session_state.current_scenario.strip()
+            )
 
-
-        # ---------------------------------------------------------
-        # 3. Check whether this is a failure-simulation question
-        # ---------------------------------------------------------
 
         query_lower = query_to_run.lower()
 
-        failure_keywords = [
-            "fail",
-            "failure",
-            "fails",
-            "unavailable",
-            "outage",
-            "breakdown",
-            "stops",
-            "stopped",
-            "shutdown",
-            "disruption",
-            "disrupted",
-            "offline",
-            "down",
-            "lost",
-            "cannot supply",
-            "can't supply"
+
+        # -------------------------------------------------
+        # DETECT ACTUAL SIMULATION INTENT
+        #
+        # "What is failure?" is NOT a simulation.
+        #
+        # "What happens if Apex Microelectronics fails?"
+        # IS a simulation.
+        # -------------------------------------------------
+
+        simulation_patterns = [
+
+            r"\bwhat\s+happens\s+if\b",
+
+            r"\bwhat\s+happens\s+when\b",
+
+            r"\bwhat\s+if\b",
+
+            r"\bif\s+.+\s+(fails?|failed)\b",
+
+            r"\bif\s+.+\s+is\s+unavailable\b",
+
+            r"\bif\s+.+\s+goes\s+down\b",
+
+            r"\bif\s+.+\s+breaks?\s+down\b",
+
+            r"\bif\s+.+\s+stops?\b",
+
+            r"\bif\s+.+\s+has\s+an?\s+outage\b",
+
+            r"\bsimulate\s+.+\s+(failure|fail|outage|unavailability)\b",
+
+            r"\bsimulat(e|ing|ion)\s+.+\b"
         ]
 
+
         is_failure_question = any(
-            keyword in query_lower
-            for keyword in failure_keywords
+            re.search(
+                pattern,
+                query_lower
+            )
+            for pattern in simulation_patterns
         )
 
 
-        # ---------------------------------------------------------
-        # 4. Handle general / unrelated questions
-        # ---------------------------------------------------------
+        # -------------------------------------------------
+        # GENERAL / UNRELATED QUESTION
+        # -------------------------------------------------
 
         if not is_failure_question:
 
+            # IMPORTANT:
+            # Remove any previous simulation result.
+            # This prevents an old Apex/Voltra report from
+            # appearing after asking "What is failure?"
+
+            st.session_state.scenario_result = None
+            st.session_state.selected_failed_node = None
+            st.session_state.affected_nodes = []
+
             st.info(
-                "ℹ️ This is not a failure-simulation scenario. "
-                "Please ask about a failure involving an entity "
-                "from the uploaded organizational data."
+                "ℹ️ This is a general question, not a failure-simulation "
+                "scenario. Please ask what happens when an entity from "
+                "the uploaded organizational data fails or becomes unavailable."
             )
 
-        else:
 
-            # -----------------------------------------------------
-            # 5. Run the actual NEXUS failure simulation
-            #
-            # The pipeline itself determines whether the entity
-            # exists in the uploaded dependency graph.
-            # -----------------------------------------------------
+        # -------------------------------------------------
+        # ACTUAL FAILURE SIMULATION
+        # -------------------------------------------------
+
+        else:
 
             st.session_state.current_scenario = query_to_run
 
@@ -515,27 +613,42 @@ if run_button or st.session_state.get("trigger_sim", False):
 
                     st.rerun()
 
+
             except ValueError as e:
 
-                error_message = str(e).lower()
+                # Convert backend ValueErrors into user-friendly
+                # informational messages instead of Streamlit errors.
 
-                # Friendly response when the requested entity
-                # cannot be found in the uploaded data.
+                error_message = str(
+                    e
+                ).lower()
+
+
+                # Entity / node not found
                 if (
-                    "failed node" in error_message
-                    or "not found" in error_message
+                    "not found" in error_message
+                    or "failed node" in error_message
                     or "entity" in error_message
                     or "node" in error_message
-                    or "dependency graph" in error_message
                 ):
 
+                    st.session_state.scenario_result = None
+                    st.session_state.selected_failed_node = None
+                    st.session_state.affected_nodes = []
+
                     st.info(
-                        f"ℹ️ **{query_to_run}** could not be matched "
-                        "to an entity in the uploaded organizational data. "
-                        "Please check the entity name and try again."
+                        "ℹ️ The requested entity was not found in the "
+                        "uploaded organizational data. Please check the "
+                        "entity name and try again."
                     )
 
+
+                # Any other ValueError
                 else:
+
+                    st.session_state.scenario_result = None
+                    st.session_state.selected_failed_node = None
+                    st.session_state.affected_nodes = []
 
                     st.warning(
                         "⚠️ NEXUS could not run this failure simulation. "
@@ -543,6 +656,7 @@ if run_button or st.session_state.get("trigger_sim", False):
                     )
 
 
+# Close Scenario Lab Card
 st.markdown(
     "</div>",
     unsafe_allow_html=True
@@ -550,7 +664,7 @@ st.markdown(
 
 
 # ---------------------------------------------------------
-# 5. Live Agent Swarm Execution Monitor
+# 5. LIVE AGENT SWARM EXECUTION MONITOR
 # ---------------------------------------------------------
 
 render_agent_activity_feed(
@@ -564,7 +678,7 @@ st.markdown(
 
 
 # ---------------------------------------------------------
-# 6. Executive Impact Report
+# 6. EXECUTIVE IMPACT REPORT
 # ---------------------------------------------------------
 
 if st.session_state.scenario_result:
