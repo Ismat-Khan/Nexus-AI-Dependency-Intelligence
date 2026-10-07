@@ -405,43 +405,145 @@ if run_button or st.session_state.get("trigger_sim", False):
 
     st.session_state.trigger_sim = False
 
-    if run_button:
+    # ---------------------------------------------------------
+    # 1. Make sure a dataset is loaded
+    # ---------------------------------------------------------
 
-        query_to_run = scenario_query.strip()
+    if not curr_state:
 
-        if not query_to_run:
-            st.warning(
-                "Please enter a failure scenario before running the simulation."
-            )
-            st.stop()
+        st.warning(
+            "⚠️ No organizational data is loaded. "
+            "Please upload your organization files or load the "
+            "Voltra Mobility Demo before running a failure simulation."
+        )
 
     else:
 
-        query_to_run = st.session_state.current_scenario
+        # ---------------------------------------------------------
+        # 2. Get the scenario query
+        # ---------------------------------------------------------
 
-    # Keep the current scenario synchronized with the query being executed.
-    st.session_state.current_scenario = query_to_run
+        if run_button:
 
-    with st.spinner(
-        "Executing CASCADE -> SENTINEL -> AEGIS multi-agent pipeline..."
-    ):
+            query_to_run = scenario_query.strip()
 
-        res = st.session_state.pipeline.run_scenario(
-            query_to_run,
-            use_llm=groq_active
-        )
+            if not query_to_run:
+                st.warning(
+                    "Please enter a failure scenario before running the simulation."
+                )
+                st.stop()
 
-        st.session_state.scenario_result = res
+        else:
 
-        st.session_state.selected_failed_node = res[
-            "failed_node"
+            query_to_run = st.session_state.current_scenario
+
+
+        # ---------------------------------------------------------
+        # 3. Check whether this is actually a failure scenario
+        # ---------------------------------------------------------
+
+        query_lower = query_to_run.lower()
+
+        failure_keywords = [
+            "fail",
+            "failure",
+            "unavailable",
+            "outage",
+            "breakdown",
+            "stops",
+            "stopped",
+            "shutdown",
+            "disruption",
+            "disrupted",
+            "offline",
+            "down",
+            "lost",
+            "unavailable for",
+            "fails for",
+            "cannot supply",
+            "can't supply"
         ]
 
-        st.session_state.affected_nodes = res[
-            "impact_result"
-        ].all_affected_nodes
+        is_failure_question = any(
+            keyword in query_lower
+            for keyword in failure_keywords
+        )
 
-        st.rerun()
+
+        # ---------------------------------------------------------
+        # 4. Check whether the question refers to uploaded data
+        # ---------------------------------------------------------
+
+        graph = curr_state.get("graph")
+
+        entity_names = []
+
+        if graph:
+
+            try:
+                entity_names = [
+                    str(node).lower()
+                    for node in graph.nodes()
+                ]
+            except Exception:
+                entity_names = []
+
+        mentions_dataset_entity = any(
+            entity_name in query_lower
+            for entity_name in entity_names
+            if len(entity_name.strip()) >= 3
+        )
+
+
+        # ---------------------------------------------------------
+        # 5. Reject unrelated/general questions
+        # ---------------------------------------------------------
+
+        if not is_failure_question:
+
+            st.info(
+                "ℹ️ This question is not a failure-simulation scenario. "
+                "Please ask what happens when an entity, supplier, machine, "
+                "system, or service from the uploaded data fails or becomes unavailable."
+            )
+
+        elif not mentions_dataset_entity:
+
+            st.info(
+                "ℹ️ This scenario does not appear to relate to an entity "
+                "in the uploaded organizational data. "
+                "Please mention a supplier, component, machine, system, "
+                "service, or other entity from the uploaded data."
+            )
+
+        else:
+
+            # ---------------------------------------------------------
+            # 6. Run the actual deterministic simulation
+            # ---------------------------------------------------------
+
+            st.session_state.current_scenario = query_to_run
+
+            with st.spinner(
+                "Executing CASCADE -> SENTINEL -> AEGIS multi-agent pipeline..."
+            ):
+
+                res = st.session_state.pipeline.run_scenario(
+                    query_to_run,
+                    use_llm=groq_active
+                )
+
+                st.session_state.scenario_result = res
+
+                st.session_state.selected_failed_node = res[
+                    "failed_node"
+                ]
+
+                st.session_state.affected_nodes = res[
+                    "impact_result"
+                ].all_affected_nodes
+
+                st.rerun()
 
 
 st.markdown(
